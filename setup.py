@@ -37,17 +37,19 @@ try:
 except IOError:
     README = ''
 
-
-__author__ = 'See AUTHORS'
-__license__ = 'MIT'
-__author_email__ = 'charlie.clark@clark-consulting.eu'
-__url__ = 'https://bitbucket.org/openpyxl/et_xmlfile'
+from et_xmlfile import (
+    __author__,
+    __license__,
+    __author_email__,
+    __url__,
+    __version__
+)
 
 
 setup(name='et_xmlfile',
     packages=find_packages(),
     # metadata
-    version="1.0.0",
+    version=__version__,
     description="An implementation of lxml.xmlfile for the standard library",
     long_description=README,
     author=__author__,
