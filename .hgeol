@@ -1,0 +1,10 @@
+[repository]
+
+[patterns]
+**.ini = native
+**.py = native
+**.xml = native
+**.rst = native
+**.txt = native
+**.png = BIN
+**.zip = BIN
