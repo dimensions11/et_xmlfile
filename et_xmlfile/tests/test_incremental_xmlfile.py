@@ -12,10 +12,10 @@ import unittest
 import tempfile, os, sys
 
 from .common_imports import HelperTestCase, skipIf
-from . import xmlfile as etree
+from .. import xmlfile as etree
 
 import pytest
-from openpyxl.tests.helper import compare_xml
+from .helper import compare_xml
 
 import xml.etree.ElementTree
 
