@@ -12,15 +12,14 @@ import unittest
 import tempfile, os, sys
 
 from .common_imports import HelperTestCase, skipIf
-from .. import xmlfile as etree
+from et_xmlfile import xmlfile
+from et_xmlfile.xmlfile import LxmlSyntaxError
 
 import pytest
 from .helper import compare_xml
 
 import xml.etree.ElementTree
-
-# _parse_file needs parse routine - take it from ElementTree
-etree.parse = xml.etree.ElementTree.parse
+from xml.etree.ElementTree import Element, parse
 
 
 class _XmlFileTestCaseBase(HelperTestCase):
@@ -30,19 +29,19 @@ class _XmlFileTestCaseBase(HelperTestCase):
         self._file = BytesIO()
 
     def test_element(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 pass
         self.assertXml('<test></test>')
 
     def test_element_write_text(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 xf.write('toast')
         self.assertXml('<test>toast</test>')
 
     def test_element_nested(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 with xf.element('toast'):
                     with xf.element('taste'):
@@ -50,7 +49,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
         self.assertXml('<test><toast><taste>conTent</taste></toast></test>')
 
     def test_element_nested_with_text(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 xf.write('con')
                 with xf.element('toast'):
@@ -63,13 +62,13 @@ class _XmlFileTestCaseBase(HelperTestCase):
                        'tnet</toast>noc</test>')
 
     def test_write_Element(self):
-        with etree.xmlfile(self._file) as xf:
-            xf.write(etree.Element('test'))
+        with xmlfile(self._file) as xf:
+            xf.write(Element('test'))
         self.assertXml('<test/>')
 
     def test_write_Element_repeatedly(self):
-        element = etree.Element('test')
-        with etree.xmlfile(self._file) as xf:
+        element = Element('test')
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 for i in range(100):
                     xf.write(element)
@@ -80,39 +79,39 @@ class _XmlFileTestCaseBase(HelperTestCase):
         self.assertEqual(set(['test']), set(el.tag for el in tree.getroot()))
 
     def test_namespace_nsmap(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('{nsURI}test', nsmap={'x': 'nsURI'}):
                 pass
         self.assertXml('<x:test xmlns:x="nsURI"></x:test>')
 
     def test_namespace_nested_nsmap(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test', nsmap={'x': 'nsURI'}):
                 with xf.element('{nsURI}toast'):
                     pass
         self.assertXml('<test xmlns:x="nsURI"><x:toast></x:toast></test>')
 
     def test_anonymous_namespace(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('{nsURI}test'):
                 pass
         self.assertXml('<ns0:test xmlns:ns0="nsURI"></ns0:test>')
 
     def test_namespace_nested_anonymous(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 with xf.element('{nsURI}toast'):
                     pass
         self.assertXml('<test><ns0:toast xmlns:ns0="nsURI"></ns0:toast></test>')
 
     def test_default_namespace(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('{nsURI}test', nsmap={None: 'nsURI'}):
                 pass
         self.assertXml('<test xmlns="nsURI"></test>')
 
     def test_nested_default_namespace(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('{nsURI}test', nsmap={None: 'nsURI'}):
                 with xf.element('{nsURI}toast'):
                     pass
@@ -120,28 +119,29 @@ class _XmlFileTestCaseBase(HelperTestCase):
 
     @pytest.mark.xfail
     def test_pi(self):
-        with etree.xmlfile(self._file) as xf:
-            xf.write(etree.ProcessingInstruction('pypi'))
+        from et_xmlfile.xmlfile import ProcessingInstruction
+        with xmlfile(self._file) as xf:
+            xf.write(ProcessingInstruction('pypi'))
             with xf.element('test'):
                 pass
         self.assertXml('<?pypi ?><test></test>')
 
     @pytest.mark.xfail
     def test_comment(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             xf.write(etree.Comment('a comment'))
             with xf.element('test'):
                 pass
         self.assertXml('<!--a comment--><test></test>')
 
     def test_attribute(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test', attrib={'k': 'v'}):
                 pass
         self.assertXml('<test k="v"></test>')
 
     def test_escaping(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 xf.write('Comments: <!-- text -->\n')
                 xf.write('Entities: &amp;')
@@ -150,14 +150,14 @@ class _XmlFileTestCaseBase(HelperTestCase):
 
     @pytest.mark.xfail
     def test_encoding(self):
-        with etree.xmlfile(self._file, encoding='utf16') as xf:
+        with xmlfile(self._file, encoding='utf16') as xf:
             with xf.element('test'):
                 xf.write('toast')
         self.assertXml('<test>toast</test>', encoding='utf16')
 
     @pytest.mark.xfail
     def test_buffering(self):
-        with etree.xmlfile(self._file, buffered=False) as xf:
+        with xmlfile(self._file, buffered=False) as xf:
             with xf.element('test'):
                 self.assertXml("<test>")
                 xf.write('toast')
@@ -174,7 +174,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
 
     @pytest.mark.xfail
     def test_flush(self):
-        with etree.xmlfile(self._file, buffered=True) as xf:
+        with xmlfile(self._file, buffered=True) as xf:
             with xf.element('test'):
                 self.assertXml("")
                 xf.write('toast')
@@ -189,31 +189,31 @@ class _XmlFileTestCaseBase(HelperTestCase):
 
     def test_failure_preceding_text(self):
         try:
-            with etree.xmlfile(self._file) as xf:
+            with xmlfile(self._file) as xf:
                 xf.write('toast')
-        except etree.LxmlSyntaxError:
+        except LxmlSyntaxError:
             self.assertTrue(True)
         else:
             self.assertTrue(False)
 
     def test_failure_trailing_text(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 pass
             try:
                 xf.write('toast')
-            except etree.LxmlSyntaxError:
+            except LxmlSyntaxError:
                 self.assertTrue(True)
             else:
                 self.assertTrue(False)
 
     def test_failure_trailing_Element(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 pass
             try:
-                xf.write(etree.Element('test'))
-            except etree.LxmlSyntaxError:
+                xf.write(Element('test'))
+            except LxmlSyntaxError:
                 self.assertTrue(True)
             else:
                 self.assertTrue(False)
@@ -222,7 +222,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
     def test_closing_out_of_order_in_error_case(self):
         cm_exit = None
         try:
-            with etree.xmlfile(self._file) as xf:
+            with xmlfile(self._file) as xf:
                 x = xf.element('test')
                 cm_exit = x.__exit__
                 x.__enter__()
@@ -231,7 +231,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
             self.assertTrue(cm_exit)
             try:
                 cm_exit(ValueError, ValueError("huhu"), None)
-            except etree.LxmlSyntaxError:
+            except LxmlSyntaxError:
                 self.assertTrue(True)
             else:
                 self.assertTrue(False)
@@ -250,7 +250,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
         pos = self._file.tell()
         self._file.seek(0)
         try:
-            return etree.parse(self._file)
+            return parse(self._file)
         finally:
             self._file.seek(pos)
 
@@ -268,7 +268,7 @@ class BytesIOXmlFileTestCase(_XmlFileTestCaseBase):
         self._file = BytesIO()
 
     def test_filelike_close(self):
-        with etree.xmlfile(self._file, close=True) as xf:
+        with xmlfile(self._file, close=True) as xf:
             with xf.element('test'):
                 pass
         self.assertRaises(ValueError, self._file.getvalue)
@@ -297,7 +297,7 @@ class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
 
     def _parse_file(self):
         self._tmpfile.seek(0)
-        return etree.parse(self._tmpfile)
+        return parse(self._tmpfile)
 
     @skipIf(True, "temp file behaviour is too platform specific here")
     def test_buffering(self):
@@ -333,18 +333,18 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         pos = self._file.tell()
         self._target.seek(0)
         try:
-            return etree.parse(self._target)
+            return parse(self._target)
         finally:
             self._target.seek(pos)
 
     def test_filelike_not_closing(self):
-        with etree.xmlfile(self._file) as xf:
+        with xmlfile(self._file) as xf:
             with xf.element('test'):
                 pass
         self.assertFalse(self._file.closed)
 
     def test_filelike_close(self):
-        with etree.xmlfile(self._file, close=True) as xf:
+        with xmlfile(self._file, close=True) as xf:
             with xf.element('test'):
                 pass
         self.assertTrue(self._file.closed)

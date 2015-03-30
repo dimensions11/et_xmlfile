@@ -6,7 +6,6 @@ from __future__ import absolute_import
 
 from contextlib import contextmanager
 
-#from openpyxl.xml.functions import Element, tostring
 from xml.etree.ElementTree import Element, tostring
 
 
