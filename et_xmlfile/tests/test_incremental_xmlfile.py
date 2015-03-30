@@ -3,9 +3,14 @@ from __future__ import absolute_import
 """
 Tests for the incremental XML serialisation API.
 
-From lxml
-
+Adapted from the tests from lxml.etree.xmlfile
 """
+
+try:
+    import lxml
+except ImportError:
+    raise ImportError("lxml is required to run the tests.")
+
 
 from io import BytesIO
 import unittest
