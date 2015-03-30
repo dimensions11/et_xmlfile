@@ -15,7 +15,6 @@ try:
 except:
     from urllib.request import pathname2url
 
-from lxml import etree
 
 def make_version_tuple(version_string):
     l = []

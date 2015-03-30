@@ -11,7 +11,7 @@ from io import BytesIO
 import unittest
 import tempfile, os, sys
 
-from .common_imports import etree, HelperTestCase, skipIf
+from .common_imports import HelperTestCase, skipIf
 from . import xmlfile as etree
 
 import pytest
