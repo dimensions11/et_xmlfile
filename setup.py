@@ -18,7 +18,7 @@ That uses the manifest.in file for data files rather than searching for
 them here.
 
 """
-
+import codecs
 import sys
 import os
 import warnings
@@ -32,7 +32,7 @@ import re
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
-    with open(os.path.join(here, 'README.rst')) as f:
+    with codecs.open(os.path.join(here, 'README.rst'), encoding="utf-8") as f:
         README = f.read()
 except IOError:
     README = ''
